@@ -233,6 +233,9 @@ def convertStyleGan2(_G,_D,Gs,channel_multiplier = 4,style_dim=1024,n_mlp=4,max_
     ckpt["g"] = g_train_state
     
     
+    return ckpt
+    
+    
     
 
 
