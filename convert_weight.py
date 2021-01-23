@@ -137,10 +137,10 @@ def discriminator_fill_statedict(statedict, vars, size):
     return statedict
 
 
-def fill_statedict(state_dict, vars, size):
+def fill_statedict(state_dict, vars, size,n_mlp=8):
     log_size = int(math.log(size, 2))
 
-    for i in range(8):
+    for i in range(n_mlp):
         update(state_dict, convert_dense(vars, f"G_mapping/Dense{i}", f"style.{i + 1}"))
 
     update(
@@ -195,6 +195,41 @@ def fill_statedict(state_dict, vars, size):
         )
 
     return state_dict
+
+
+def convertStyleGan2(_G,_D,Gs,channel_multiplier = 4,style_dim=1024,n_mlp=4,max_channel_size=1024):
+    generator, discriminator, g_ema = _G, _D, Gs
+
+    size = g_ema.output_shape[2]
+
+    g = Generator(size, style_dim, n_mlp, channel_multiplier=channel_multiplier,max_channel_size=max_channel_size)
+    state_dict = g.state_dict()
+    state_dict = fill_statedict(state_dict, g_ema.vars, size,n_mlp)
+
+    g.load_state_dict(state_dict)
+
+    latent_avg = torch.from_numpy(g_ema.vars["dlatent_avg"].value().eval())
+
+    ckpt = {"g_ema": state_dict, "latent_avg": latent_avg}
+    
+    #convert discriminator
+    channel_multiplier=2
+    disc = Discriminator(size, channel_multiplier=channel_multiplier)
+    d_state = disc.state_dict()
+    d_state = discriminator_fill_statedict(d_state, discriminator.vars, size)
+
+    disc.load_state_dict(d_state)
+    
+    ckpt["d"] = d_state
+    
+    #convert _G
+    g_train = Generator(size, style_dim, n_mlp, channel_multiplier=channel_multiplier,max_channel_size=max_channel_size)
+    g_train_state = g_train.state_dict()
+    g_train_state = fill_statedict(g_train_state, generator.vars, size)
+    ckpt["g"] = g_train_state
+    
+    
+    
 
 
 if __name__ == "__main__":
