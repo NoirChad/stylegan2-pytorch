@@ -360,6 +360,7 @@ class Generator(nn.Module):
         channel_multiplier=2,
         blur_kernel=[1, 3, 3, 1],
         lr_mlp=0.01,
+        max_channel_size=512
     ):
         super().__init__()
 
@@ -379,10 +380,10 @@ class Generator(nn.Module):
         self.style = nn.Sequential(*layers)
 
         self.channels = {
-            4: 512,
-            8: 512,
-            16: 512,
-            32: 512,
+            4: min(max_channel_size, 4096 * channel_multiplier),
+            8: min(max_channel_size, 2048 * channel_multiplier),
+            16: min(max_channel_size, 1024 * channel_multiplier),
+            32: min(max_channel_size, 512 * channel_multiplier),
             64: 256 * channel_multiplier,
             128: 128 * channel_multiplier,
             256: 64 * channel_multiplier,
@@ -600,8 +601,18 @@ class ResBlock(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, size, channel_multiplier=2, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, 
+                 size, 
+                 channel_multiplier=2, 
+                 blur_kernel=[1, 3, 3, 1],
+                 stddev_group = 4
+                 stddev_feat = 1
+                ):
+        
         super().__init__()
+        
+        self.stddev_group = stddev_group
+        self.stddev_feat = stddev_feat 
 
         channels = {
             4: 512,
@@ -630,10 +641,9 @@ class Discriminator(nn.Module):
 
         self.convs = nn.Sequential(*convs)
 
-        self.stddev_group = 4
-        self.stddev_feat = 1
+        
 
-        self.final_conv = ConvLayer(in_channel + 1, channels[4], 3)
+        self.final_conv = ConvLayer(in_channel + stddev_feat, channels[4], 3)
         self.final_linear = nn.Sequential(
             EqualLinear(channels[4] * 4 * 4, channels[4], activation="fused_lrelu"),
             EqualLinear(channels[4], 1),
