@@ -214,7 +214,11 @@ def convertStyleGan2(_G,_D,Gs,channel_multiplier = 4,style_dim=1024,n_mlp=4,max_
     
     #convert discriminator
     channel_multiplier=2
-    disc = Discriminator(size, channel_multiplier=channel_multiplier)
+    disc = Discriminator(size, 
+                 channel_multiplier=channel_multiplier,
+                 stddev_group = 32
+                 stddev_feat = 4)
+    
     d_state = disc.state_dict()
     d_state = discriminator_fill_statedict(d_state, discriminator.vars, size)
 
