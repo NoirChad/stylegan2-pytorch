@@ -605,7 +605,7 @@ class Discriminator(nn.Module):
                  size, 
                  channel_multiplier=2, 
                  blur_kernel=[1, 3, 3, 1],
-                 stddev_group = 4
+                 stddev_group = 4,
                  stddev_feat = 1
                 ):
         
