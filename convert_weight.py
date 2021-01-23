@@ -229,7 +229,7 @@ def convertStyleGan2(_G,_D,Gs,channel_multiplier = 4,style_dim=1024,n_mlp=4,max_
     #convert _G
     g_train = Generator(size, style_dim, n_mlp, channel_multiplier=channel_multiplier,max_channel_size=max_channel_size)
     g_train_state = g_train.state_dict()
-    g_train_state = fill_statedict(g_train_state, generator.vars, size)
+    g_train_state = fill_statedict(g_train_state, generator.vars, size,n_mlp)
     ckpt["g"] = g_train_state
     
     
