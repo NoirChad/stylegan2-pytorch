@@ -5,15 +5,15 @@ from torch.nn import functional as F
 from torch.autograd import Function
 from torch.utils.cpp_extension import load
 
-
-module_path = os.path.dirname(__file__)
-upfirdn2d_op = load(
-    "upfirdn2d",
-    sources=[
-        os.path.join(module_path, "upfirdn2d.cpp"),
-        os.path.join(module_path, "upfirdn2d_kernel.cu"),
-    ],
-)
+if torch.cuda.is_available():
+    module_path = os.path.dirname(__file__)
+    upfirdn2d_op = load(
+        "upfirdn2d",
+        sources=[
+            os.path.join(module_path, "upfirdn2d.cpp"),
+            os.path.join(module_path, "upfirdn2d_kernel.cu"),
+        ],
+    )
 
 
 class UpFirDn2dBackward(Function):
@@ -143,7 +143,7 @@ class UpFirDn2d(Function):
 
 
 def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
-    if input.device.type == "cpu":
+    if input.device.type == "cpu" or input.device.type=="xla":
         out = upfirdn2d_native(
             input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
         )
