@@ -286,7 +286,7 @@ if __name__ == "__main__":
         help="max channel size"
     )
     parser.add_argument(
-        "--stylegan2", action="store_false", help="convert stylegan2"
+        "--stylegan2", action="store_true", help="convert stylegan2"
     )
     parser.add_argument("path", metavar="PATH", help="path to the tensorflow weights")
 
