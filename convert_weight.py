@@ -301,7 +301,7 @@ if __name__ == "__main__":
 
     size = g_ema.output_shape[2]
 
-    g = Generator(size, args.style_dim, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.mmax_channel_size)
+    g = Generator(size, args.style_dim, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size)
     state_dict = g.state_dict()
     state_dict = fill_statedict(state_dict, g_ema.vars, size)
 
@@ -312,7 +312,7 @@ if __name__ == "__main__":
     ckpt = {"g_ema": state_dict, "latent_avg": latent_avg}
 
     if args.gen:
-        g_train = Generator(size, args.style_dim, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.mmax_channel_size)
+        g_train = Generator(size, args.style_dim, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size)
         g_train_state = g_train.state_dict()
         g_train_state = fill_statedict(g_train_state, generator.vars, size)
         ckpt["g"] = g_train_state
