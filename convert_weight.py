@@ -265,25 +265,25 @@ if __name__ == "__main__":
         "--channel_multiplier",
         type=int,
         default=2,
-        help="channel multiplier factor. config-f = 2, else = 1",
+        help="channel multiplier factor. config-f = 2, else = 1"
     )
     parser.add_argument(
         "--style_dim",
         type=int,
         default=512,
-        help="style dimension of the generator",
+        help="style dimension of the generator"
     )
     parser.add_argument(
         "--n_mlp",
         type=int,
         default=8,
-        help="n_mlp",
+        help="n_mlp"
     )
     parser.add_argument(
         "--max_channel_size",
         type=int,
         default=512,
-        help="max channel size",
+        help="max channel size"
     )
     parser.add_argument("path", metavar="PATH", help="path to the tensorflow weights")
 
@@ -356,4 +356,5 @@ if __name__ == "__main__":
 
     utils.save_image(
         img_concat, name + ".png", nrow=n_sample, normalize=True, range=(-1, 1)
+    )
 
