@@ -216,9 +216,9 @@ def convertStyleGan2(_G,_D,Gs,channel_multiplier = 4,style_dim=1024,n_mlp=4,max_
     #convert _G
     g_train = Generator(size, style_dim, n_mlp, channel_multiplier=channel_multiplier,max_channel_size=max_channel_size)
     g_train_state = g_train.state_dict()
-    g_train_state = fill_statedict(g_train_state, generator.vars, size,n_mlp)
+    g_train_state = fill_statedict(g_train_state, generator.vars, size, n_mlp)
     ckpt["g"] = g_train_state
-    
+
     
     #convert discriminator
     channel_multiplier=2
@@ -285,6 +285,9 @@ if __name__ == "__main__":
         default=512,
         help="max channel size"
     )
+    parser.add_argument(
+        "--stylegan2", action="store_false", help="convert stylegan2"
+    )
     parser.add_argument("path", metavar="PATH", help="path to the tensorflow weights")
 
     args = parser.parse_args()
@@ -303,7 +306,7 @@ if __name__ == "__main__":
 
     g = Generator(size, args.style_dim, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size)
     state_dict = g.state_dict()
-    state_dict = fill_statedict(state_dict, g_ema.vars, size,args.n_mlp)
+    state_dict = fill_statedict(state_dict, g_ema.vars, size, args.n_mlp)
 
     g.load_state_dict(state_dict)
 
@@ -314,11 +317,15 @@ if __name__ == "__main__":
     if args.gen:
         g_train = Generator(size, args.style_dim, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size)
         g_train_state = g_train.state_dict()
-        g_train_state = fill_statedict(g_train_state, generator.vars, size)
+        g_train_state = fill_statedict(g_train_state, generator.vars, size, args.n_mlp)
         ckpt["g"] = g_train_state
 
     if args.disc:
-        disc = Discriminator(size, channel_multiplier=args.channel_multiplier)
+
+        if args.stylegan2:
+            disc = Discriminator(size, channel_multiplier=2, stddev_group=32, stddev_feat=4)
+        else:
+            disc = Discriminator(size, channel_multiplier=args.channel_multiplier)
         d_state = disc.state_dict()
         d_state = discriminator_fill_statedict(d_state, discriminator.vars, size)
         ckpt["d"] = d_state
