@@ -303,7 +303,7 @@ if __name__ == "__main__":
 
     g = Generator(size, args.style_dim, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size)
     state_dict = g.state_dict()
-    state_dict = fill_statedict(state_dict, g_ema.vars, size,n_mlp)
+    state_dict = fill_statedict(state_dict, g_ema.vars, size,args.n_mlp)
 
     g.load_state_dict(state_dict)
 
