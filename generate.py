@@ -62,14 +62,29 @@ if __name__ == "__main__":
         default=2,
         help="channel multiplier of the generator. config-f = 2, else = 1",
     )
+    parser.add_argument(
+        "--latent",
+        type=int,
+        default=512,
+        help="demension of the latent",
+    )
+    parser.add_argument(
+        "--n_mlp",
+        type=int,
+        default=8,
+        help="n_mlp",
+    )
+    parser.add_argument(
+        "--max_channel_size",
+        type=int,
+        default=512,
+        help="max channel size",
+    )
 
     args = parser.parse_args()
 
-    args.latent = 512
-    args.n_mlp = 8
-
     g_ema = Generator(
-        args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
+        args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size
     ).to(device)
     checkpoint = torch.load(args.ckpt)
 
