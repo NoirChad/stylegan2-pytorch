@@ -338,7 +338,7 @@ if __name__ == "__main__":
 
     g = g.to(device)
 
-    z = np.random.RandomState(0).randn(n_sample, 512).astype("float32")
+    z = np.random.RandomState(0).randn(n_sample, args.style_dim).astype("float32")
 
     with torch.no_grad():
         img_pt, _ = g(
