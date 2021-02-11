@@ -267,6 +267,24 @@ if __name__ == "__main__":
         default=2,
         help="channel multiplier factor. config-f = 2, else = 1",
     )
+    parser.add_argument(
+        "--style_dim",
+        type=int,
+        default=512,
+        help="style dimension of the generator",
+    )
+    parser.add_argument(
+        "--n_mlp",
+        type=int,
+        default=8,
+        help="n_mlp",
+    )
+    parser.add_argument(
+        "--max_channel_size",
+        type=int,
+        default=512,
+        help="max channel size",
+    )
     parser.add_argument("path", metavar="PATH", help="path to the tensorflow weights")
 
     args = parser.parse_args()
@@ -283,7 +301,7 @@ if __name__ == "__main__":
 
     size = g_ema.output_shape[2]
 
-    g = Generator(size, 512, 8, channel_multiplier=args.channel_multiplier)
+    g = Generator(size, args.style_dim, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.mmax_channel_size)
     state_dict = g.state_dict()
     state_dict = fill_statedict(state_dict, g_ema.vars, size)
 
@@ -294,7 +312,7 @@ if __name__ == "__main__":
     ckpt = {"g_ema": state_dict, "latent_avg": latent_avg}
 
     if args.gen:
-        g_train = Generator(size, 512, 8, channel_multiplier=args.channel_multiplier)
+        g_train = Generator(size, args.style_dim, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.mmax_channel_size)
         g_train_state = g_train.state_dict()
         g_train_state = fill_statedict(g_train_state, generator.vars, size)
         ckpt["g"] = g_train_state
@@ -338,5 +356,4 @@ if __name__ == "__main__":
 
     utils.save_image(
         img_concat, name + ".png", nrow=n_sample, normalize=True, range=(-1, 1)
-    )
 
