@@ -84,9 +84,21 @@ if __name__ == "__main__":
         truncation_latent=trunc,
         input_is_latent=True,
     )
+    img3, _ = g(
+        [latent + 2 * direction],
+        truncation=args.truncation,
+        truncation_latent=trunc,
+        input_is_latent=True,
+    )
+    img4, _ = g(
+        [latent - 2 * direction],
+        truncation=args.truncation,
+        truncation_latent=trunc,
+        input_is_latent=True,
+    )
 
     grid = utils.save_image(
-        torch.cat([img1, img, img2], 0),
+        torch.cat([img3, img1, img, img2, img4], 0),
         f"{args.out_prefix}_index-{args.index}_degree-{args.degree}.png",
         normalize=True,
         range=(-1, 1),
