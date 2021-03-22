@@ -10,9 +10,9 @@ from model import Generator
 
 if __name__ == "__main__":
     
-    torch.manual_seed(0)
-    numpy.random.seed(0)
-    random.seed(0)
+    torch.manual_seed(1)
+    numpy.random.seed(1)
+    random.seed(1)
     
     torch.set_grad_enabled(False)
 
