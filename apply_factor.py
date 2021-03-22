@@ -8,9 +8,9 @@ from model import Generator
 
 if __name__ == "__main__":
     
-    torch.manual_seed(2021)
-    numpy.random.seed(2021)
-    random.seed(2021)
+    torch.manual_seed(0)
+    numpy.random.seed(0)
+    random.seed(0)
     
     torch.set_grad_enabled(False)
 
