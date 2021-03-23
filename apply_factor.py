@@ -83,14 +83,14 @@ if __name__ == "__main__":
     eigvec = torch.load(args.factor)["eigvec"].to(args.device)
     ckpt = torch.load(args.ckpt)
     if args.full_model:
-        g_ema = torch.load(args.ckpt).to(args.device)
+        g = torch.load(args.ckpt).to(args.device)
     else:
-        g_ema = Generator(
+        g = Generator(
             args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size
         ).to(args.device)
         checkpoint = torch.load(args.ckpt)
 
-        g_ema.load_state_dict(checkpoint["g_ema"])
+        g.load_state_dict(checkpoint["g_ema"])
 
     trunc = g.mean_latent(4096)
 
