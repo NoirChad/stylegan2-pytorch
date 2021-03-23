@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     W = torch.cat(weight_mat, 0)
 
-    num_of_components = args.num_of_components
+    num_of_components = args.number_of_component
 
     np.random.seed(0)
     random.seed(0)
