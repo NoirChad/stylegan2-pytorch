@@ -34,6 +34,24 @@ if __name__ == "__main__":
         default=2,
         help='channel multiplier factor. config-f = 2, else = 1',
     )
+    parser.add_argument(
+        "--latent",
+        type=int,
+        default=512,
+        help="demension of the latent",
+    )
+    parser.add_argument(
+        "--n_mlp",
+        type=int,
+        default=8,
+        help="n_mlp",
+    )
+    parser.add_argument(
+        "--max_channel_size",
+        type=int,
+        default=512,
+        help="max channel size",
+    )
     parser.add_argument("--ckpt", type=str, required=True, help="stylegan2 checkpoints")
     parser.add_argument(
         "--size", type=int, default=256, help="output image size of the generator"
@@ -58,13 +76,21 @@ if __name__ == "__main__":
         type=str,
         help="name of the closed form factorization result factor file",
     )
+    parser.add_argument('--full_model', default=False, action='store_true')
 
     args = parser.parse_args()
 
     eigvec = torch.load(args.factor)["eigvec"].to(args.device)
     ckpt = torch.load(args.ckpt)
-    g = Generator(args.size, 512, 8, channel_multiplier=args.channel_multiplier).to(args.device)
-    g.load_state_dict(ckpt["g_ema"], strict=False)
+    if args.full_model:
+        g_ema = torch.load(args.ckpt).to(device)
+    else:
+        g_ema = Generator(
+            args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size
+        ).to(device)
+        checkpoint = torch.load(args.ckpt)
+
+        g_ema.load_state_dict(checkpoint["g_ema"])
 
     trunc = g.mean_latent(4096)
 
