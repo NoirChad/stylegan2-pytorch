@@ -85,6 +85,7 @@ if __name__ == "__main__":
         help="name of the closed form factorization result factor file",
     )
     parser.add_argument('--full_model', default=False, action='store_true')
+    parser.add_argument('--transpose', default=False, action='store_true')
 
     args = parser.parse_args()
 
@@ -161,7 +162,11 @@ if __name__ == "__main__":
 
     print(final_image.shape)
 
-    final_image = torch.transpose(final_image, 0, 1)
+    if args.transpose:
+      final_image = torch.transpose(final_image, 0, 1)
+      nrow = 5
+    else:
+      nrow = num_of_components
 
     print(final_image.shape)
 
@@ -174,5 +179,5 @@ if __name__ == "__main__":
         f"demo.png",
         normalize=True,
         range=(-1, 1),
-        nrow=5,
+        nrow=nrow,
     )
