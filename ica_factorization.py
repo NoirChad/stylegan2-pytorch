@@ -27,13 +27,18 @@ if __name__ == "__main__":
         "--out", type=str, default="factor.pt", help="name of the result factor file"
     )
     parser.add_argument("ckpt", type=str, help="name of the model checkpoint")
+    parser.add_argument('--full_model', default=False, action='store_true')
 
     args = parser.parse_args()
 
-    ckpt = torch.load(args.ckpt)
+    if args.full_model:
+      state_dict = torch.load(args.ckpt).state_dict()
+    else:
+      state_dict = torch.load(args.ckpt)["g_ema"]
+      
     modulate = {
         k: v
-        for k, v in ckpt["g_ema"].items()
+        for k, v in state_dict.items()
         if "modulation" in k and "to_rgbs" not in k and "weight" in k
     }
 
