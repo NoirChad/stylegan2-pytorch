@@ -89,15 +89,20 @@ if __name__ == "__main__":
         default='sample',
         help="the output directory",
     )
+    parser.add_argument('--full_model', type = bool, action='store_true')
 
     args = parser.parse_args()
+    
+    if args.full_model:
+        g_ema = torch.load(args.ckpt).to(device)
+    else:
+        g_ema = Generator(
+            args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size
+        ).to(device)
+        checkpoint = torch.load(args.ckpt)
 
-    g_ema = Generator(
-        args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size
-    ).to(device)
-    checkpoint = torch.load(args.ckpt)
-
-    g_ema.load_state_dict(checkpoint["g_ema"])
+        g_ema.load_state_dict(checkpoint["g_ema"])
+    
 
     if args.truncation < 1:
         with torch.no_grad():
