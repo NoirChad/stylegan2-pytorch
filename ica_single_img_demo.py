@@ -142,12 +142,9 @@ if __name__ == "__main__":
 
       final_image = torch.cat(imgs).unsqueeze(0)
 
-      print(final_image.shape)
-
       if args.transpose:
         final_image = torch.transpose(final_image, 0, 1)
-
-      print(final_image.shape)
+      
       directional_results += [final_image]
 
 
