@@ -3,6 +3,7 @@ import argparse
 import torch
 import random
 from torchvision import utils
+from torchvision import transforms
 from sklearn.decomposition import FastICA
 import numpy as np
 import random
@@ -116,53 +117,46 @@ if __name__ == "__main__":
 
     trunc = g.mean_latent(128)
 
-    latent = trunc.tile((num_of_components,1))
+    #latent = trunc.tile((num_of_components,1))
 
-    direction = args.degree * components[:, 0:num_of_components].T
+    latent = trunc
 
-    img, _ = g(
-        [latent],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
-    img1, _ = g(
-        [latent + direction],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
-    img2, _ = g(
-        [latent - direction],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
-    img3, _ = g(
-        [latent + 2 * direction],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
-    img4, _ = g(
-        [latent - 2 * direction],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
-    print(img.shape)
+    alpha = [-2, -1, 0, 1, 2]
+    resize_transoform = transforms.Resize(64)
+    to_pil_transoform = transforms.ToPILImage()
 
-    final_image = torch.cat([img3.unsqueeze(0), img1.unsqueeze(0), img.unsqueeze(0), img2.unsqueeze(0), img4.unsqueeze(0)], 0)
+    directional_results = []
 
-    print(final_image.shape)
+    for d in range(num_of_components):
+      imgs = []
+      direction = args.degree * components[:, d].T
+      for i in range(5):
+        img, _ = g(
+          [latent + alpha[i] * direction],
+          truncation=args.truncation,
+          truncation_latent=trunc,
+          input_is_latent=True,
+        )
+        img = resize_transoform(img)
+        imgs += [img]
+
+      final_image = torch.cat(imgs).unsqueeze(0)
+
+      print(final_image.shape)
+
+      if args.transpose:
+        final_image = torch.transpose(final_image, 0, 1)
+
+      print(final_image.shape)
+      directional_results += [final_image]
+
 
     if args.transpose:
-      final_image = torch.transpose(final_image, 0, 1)
-      nrow = 5
-    else:
       nrow = num_of_components
-
-    print(final_image.shape)
+      final_image = torch.cat(directional_results, 0)
+    else:
+      nrow = 5
+      final_image = torch.cat(directional_results, 1)
 
     final_image = final_image.reshape(final_image.shape[0] * final_image.shape[1], final_image.shape[2], final_image.shape[3], final_image.shape[4])
 
