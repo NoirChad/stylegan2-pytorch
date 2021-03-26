@@ -79,17 +79,11 @@ if __name__ == "__main__":
         default="factor",
         help="filename prefix to result samples",
     )
-    parser.add_argument(
-        "factor",
-        type=str,
-        help="name of the closed form factorization result factor file",
-    )
     parser.add_argument('--full_model', default=False, action='store_true')
     parser.add_argument('--transpose', default=False, action='store_true')
 
     args = parser.parse_args()
 
-    eigvec = torch.load(args.factor)["eigvec"].to(args.device)
     ckpt = torch.load(args.ckpt)
 
     if args.full_model:
