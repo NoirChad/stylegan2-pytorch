@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     num_of_components = args.number_of_component
 
-    eigvec = torch.svd(W).V.to(args.device)
+    components = torch.svd(W).V.to(args.device)
 
     trunc = g.mean_latent(128)
 
