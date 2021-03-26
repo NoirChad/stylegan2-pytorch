@@ -7,6 +7,7 @@ from torchvision import transforms
 from sklearn.decomposition import FastICA
 import numpy as np
 import random
+from PIL import Image, ImageDraw, ImageFont
 
 def indipendent_components_decomposition(W, n_components):
       fast_ica = FastICA(n_components=n_components)
@@ -85,8 +86,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    print("Loading checkpoints...")
     ckpt = torch.load(args.ckpt)
-
     if args.full_model:
         state_dict = ckpt.state_dict()
         g = ckpt.to(args.device)
@@ -113,7 +114,11 @@ if __name__ == "__main__":
 
     np.random.seed(0)
     random.seed(0)
+    
+    print("Start semantic factorizing...")
     components = indipendent_components_decomposition(W, num_of_components).to(args.device)
+    print("Semantic factorizing finished!")
+    print("Generating images..")
 
     trunc = g.mean_latent(128)
 
@@ -124,11 +129,19 @@ if __name__ == "__main__":
     alpha = [-2, -1, 0, 1, 2]
     resize_transoform = transforms.Resize(64)
     to_pil_transoform = transforms.ToPILImage()
+    to_tensor_transoform = transforms.ToTensor()
 
     directional_results = []
 
     for d in range(num_of_components):
-      imgs = []
+
+      txt = Image.new("RGB", (48, 48), (255,255,255))
+      draw = ImageDraw.Draw(txt)
+      draw.text((0, 20), "i = " + str(d), fill=(0,0,0))
+      txt = txt.resize((64, 64))
+      txt = to_tensor_transoform(txt).to(args.device).unsqueeze(0)
+      imgs = [txt]
+
       direction = args.degree * components[:, d].T
       for i in range(5):
         img, _ = g(
@@ -141,27 +154,20 @@ if __name__ == "__main__":
         imgs += [img]
 
       final_image = torch.cat(imgs).unsqueeze(0)
-
-      if args.transpose:
-        final_image = torch.transpose(final_image, 0, 1)
+      final_image = torch.transpose(final_image, 0, 1)
       
       directional_results += [final_image]
 
 
-    if args.transpose:
-      nrow = num_of_components
-      final_image = torch.cat(directional_results, 0)
-    else:
-      nrow = 5
-      final_image = torch.cat(directional_results, 1)
+    nrow = 6
+    final_image = torch.cat(directional_results, 0)
 
     final_image = final_image.reshape(final_image.shape[0] * final_image.shape[1], final_image.shape[2], final_image.shape[3], final_image.shape[4])
-
-    print(final_image.shape)
 
     grid = utils.save_image(
         final_image,
         f"demo.png",
+        pad_value  = 1,
         normalize=True,
         range=(-1, 1),
         nrow=nrow,
