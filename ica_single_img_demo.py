@@ -85,6 +85,8 @@ if __name__ == "__main__":
     parser.add_argument('--transpose', default=False, action='store_true')
     parser.add_argument("--initial_latent", type=str, required=False, default=None)
     parser.add_argument("--resolution", type=int, default=64, help="resolution")
+    parser.add_argument("--start_component", type=int, default=0, help="start_component")
+    parser.add_argument("--end_component", type=int, default=None, help="end_component")
 
 
     args = parser.parse_args()
@@ -145,7 +147,7 @@ if __name__ == "__main__":
 
     directional_results = []
 
-    for d in range(num_of_components):
+    for d in range(num_of_components)[args.start_component:args.end_component]:
 
       txt = Image.new("RGB", (48, 48), (255,255,255))
       draw = ImageDraw.Draw(txt)
