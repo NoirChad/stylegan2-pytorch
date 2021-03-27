@@ -83,6 +83,9 @@ if __name__ == "__main__":
     )
     parser.add_argument('--full_model', default=False, action='store_true')
     parser.add_argument('--transpose', default=False, action='store_true')
+    parser.add_argument("--initial_latent", type=str, required=False, default=None)
+    parser.add_argument("--resolution", type=int, default=64, help="resolution")
+
 
     args = parser.parse_args()
 
@@ -124,10 +127,19 @@ if __name__ == "__main__":
 
     #latent = trunc.tile((num_of_components,1))
 
-    latent = trunc
+    w_plus = False
+
+    if args.initial_latent:
+      proj = torch.load("Houming_Chen.pt")
+      key = list(proj.keys())
+      latent = proj[key[0]]['latent'].detach().to(args.device)
+      if latent.shape[0] == 18:
+        w_plus = True
+    else:
+      latent = trunc
 
     alpha = [-2, -1, 0, 1, 2]
-    resize_transoform = transforms.Resize(64)
+    resize_transoform = transforms.Resize(args.resolution)
     to_pil_transoform = transforms.ToPILImage()
     to_tensor_transoform = transforms.ToTensor()
 
@@ -138,14 +150,19 @@ if __name__ == "__main__":
       txt = Image.new("RGB", (48, 48), (255,255,255))
       draw = ImageDraw.Draw(txt)
       draw.text((0, 20), "i = " + str(d), fill=(0,0,0))
-      txt = txt.resize((64, 64))
+      txt = txt.resize((args.resolution, args.resolution))
       txt = to_tensor_transoform(txt).to(args.device).unsqueeze(0)
       imgs = [txt]
 
       direction = args.degree * components[:, d].T
       for i in range(5):
+        if w_plus:
+          target_latent = torch.unsqueeze(latent, 0).clone()
+          target_latent[0] = target_latent[0] + alpha[i] * direction
+        else:
+          target_latent = latent + alpha[i] * direction
         img, _ = g(
-          [latent + alpha[i] * direction],
+          [target_latent],
           truncation=args.truncation,
           truncation_latent=trunc,
           input_is_latent=True,
