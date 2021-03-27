@@ -130,7 +130,7 @@ if __name__ == "__main__":
     w_plus = False
 
     if args.initial_latent:
-      proj = torch.load("Houming_Chen.pt")
+      proj = torch.load(args.initial_latent)
       key = list(proj.keys())
       latent = proj[key[0]]['latent'].detach().to(args.device)
       if latent.shape[0] == 18:
