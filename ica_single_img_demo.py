@@ -224,4 +224,4 @@ if __name__ == "__main__":
       num_of_columns = args.num_of_columns
       )
 
-    grid.save("demo.png"))
+    grid.save("demo.png")
