@@ -37,7 +37,9 @@ def ica_single_img(
         resolution = 64,
         start_component = 0,
         end_component = None,
-        num_of_columns = 5
+        num_of_columns = 5,
+        col = None,
+        row = None
     ):
 
     print("Loading checkpoints...")
@@ -96,7 +98,12 @@ def ica_single_img(
 
     directional_results = []
 
-    for d in range(num_of_components)[start_component:end_component]:
+    if row:
+      d_range = range(num_of_components)[row:row + 1]
+    else:
+      d_range = range(num_of_components)[start_component:end_component]
+
+    for d in d_range:
 
       txt = Image.new("RGB", (48, 48), (255,255,255))
       draw = ImageDraw.Draw(txt)
@@ -106,7 +113,15 @@ def ica_single_img(
       imgs = [txt]
 
       direction = degree * components[:, d].T
-      for i in range(num_of_columns):
+
+      if col:
+        imgs = []
+        i_range = range(num_of_components)[col:col + 1]
+      else:
+        imgs = [txt]
+        i_range = range(num_of_columns)
+
+      for i in i_range:
         if w_plus:
           target_latent = torch.unsqueeze(latent, 0).clone()
           target_latent[0] = target_latent[0] + alpha[i] * direction
@@ -126,8 +141,10 @@ def ica_single_img(
       
       directional_results += [final_image]
 
-
-    nrow = num_of_columns + 1
+    if col:
+      nrow = 1
+    else:
+      nrow = num_of_columns + 1
     final_image = torch.cat(directional_results, 0)
 
     final_image = final_image.reshape(final_image.shape[0] * final_image.shape[1], final_image.shape[2], final_image.shape[3], final_image.shape[4])
@@ -201,8 +218,8 @@ if __name__ == "__main__":
     parser.add_argument("--start_component", type=int, default=0, help="start_component")
     parser.add_argument("--end_component", type=int, default=None, help="end_component")
     parser.add_argument("--num_of_columns", type=int, default=5, help="num_of_columns")
-    
-
+    parser.add_argument("--col", type=int, default=None, help="column")
+    parser.add_argument("--row", type=int, default=None, help="row")
 
     args = parser.parse_args()
     
@@ -221,7 +238,9 @@ if __name__ == "__main__":
       resolution = args.resolution,
       start_component = args.start_component,
       end_component = args.end_component,
-      num_of_columns = args.num_of_columns
+      num_of_columns = args.num_of_columns,
+      col = args.col,
+      row = args.row
       )
 
     grid.save("demo.png")
