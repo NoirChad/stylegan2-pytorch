@@ -78,6 +78,9 @@ if __name__ == "__main__":
     )
     parser.add_argument('--full_model', default=False, action='store_true')
 
+    parser.add_argument("-c", "--col", type=int, default=None, help="col")
+    parser.add_argument("-r", "--row", type=int, default=None, help="row")
+
     args = parser.parse_args()
 
     eigvec = torch.load(args.factor)["eigvec"].to(args.device)
@@ -99,41 +102,50 @@ if __name__ == "__main__":
 
     direction = args.degree * eigvec[:, args.index].unsqueeze(0)
 
-    img, _ = g(
-        [latent],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
-    img1, _ = g(
-        [latent + direction],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
-    img2, _ = g(
-        [latent - direction],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
-    img3, _ = g(
-        [latent + 2 * direction],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
-    img4, _ = g(
-        [latent - 2 * direction],
-        truncation=args.truncation,
-        truncation_latent=trunc,
-        input_is_latent=True,
-    )
+    if args.row:
+      latent = latent[args.row]
+
+    alpha = range(-5 // 2 + 1, 5 // 2 + 1)
+    directional_results = []
+
+    imgs = []
+
+    if args.col:
+        imgs = []
+        i_range = range(5)[args.col:args.col + 1]
+    else:
+        imgs = [txt]
+        i_range = range(5)
+
+    for i in i_range:
+        target_latent = latent - alpha[i] * direction
+        img, _ = g(
+          [target_latent],
+          truncation=args.truncation,
+          truncation_latent=trunc,
+          input_is_latent=True,
+        )
+        #img = resize_transoform(img)
+        imgs += [img]
+    final_image = torch.cat(imgs).unsqueeze(0)
+    final_image = torch.transpose(final_image, 0, 1)
+      
+    directional_results += [final_image]
+
+    if args.row:
+      nrow = 1
+    else:
+      nrow = args.n_sample
+    final_image = torch.cat(directional_results, 0)
+
+    final_image = final_image.reshape(final_image.shape[0] * final_image.shape[1], final_image.shape[2], final_image.shape[3], final_image.shape[4])
 
     grid = utils.save_image(
-        torch.cat([img3, img1, img, img2, img4], 0),
+        final_image,
         f"{args.out_prefix}_index-{args.index}_degree-{args.degree}.png",
+        pad_value  = 1,
         normalize=True,
         range=(-1, 1),
-        nrow=args.n_sample,
+        nrow=nrow,
     )
+    
