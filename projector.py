@@ -85,6 +85,30 @@ if __name__ == "__main__":
         "--size", type=int, default=256, help="output image sizes of the generator"
     )
     parser.add_argument(
+        "--latent",
+        type=int,
+        default=512,
+        help="demension of the latent",
+    )
+    parser.add_argument(
+        "--n_mlp",
+        type=int,
+        default=8,
+        help="n_mlp",
+    )
+    parser.add_argument(
+        "--channel_multiplier",
+        type=int,
+        default=2,
+        help='channel multiplier factor. config-f = 2, else = 1',
+    )
+    parser.add_argument(
+        "--max_channel_size",
+        type=int,
+        default=512,
+        help="max channel size",
+    )
+    parser.add_argument(
         "--lr_rampup",
         type=float,
         default=0.05,
@@ -146,13 +170,13 @@ if __name__ == "__main__":
 
     imgs = torch.stack(imgs, 0).to(device)
 
-    g_ema = Generator(args.size, 512, 8)
+    g_ema = Generator(args.size, args.latent, args.n_mlp, channel_multiplier = args.channel_multiplier, max_channel_size=args.max_channel_size)
     g_ema.load_state_dict(torch.load(args.ckpt)["g_ema"], strict=False)
     g_ema.eval()
     g_ema = g_ema.to(device)
 
     with torch.no_grad():
-        noise_sample = torch.randn(n_mean_latent, 512, device=device)
+        noise_sample = torch.randn(n_mean_latent, args.latent, device=device)
         latent_out = g_ema.style(noise_sample)
 
         latent_mean = latent_out.mean(0)
