@@ -86,7 +86,7 @@ def ica_single_img(
       proj = torch.load(initial_latent)
       key = list(proj.keys())
       latent = proj[key[0]]['latent'].detach().to(device)
-      if len(latent.shape) == 2:
+      if len(list(latent.shape)) == 2:
         w_plus = True
     else:
       latent = trunc
