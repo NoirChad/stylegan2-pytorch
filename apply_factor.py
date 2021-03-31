@@ -114,7 +114,7 @@ if __name__ == "__main__":
         imgs = []
         i_range = range(5)[args.col:args.col + 1]
     else:
-        imgs = [txt]
+        imgs = []
         i_range = range(5)
 
     for i in i_range:
