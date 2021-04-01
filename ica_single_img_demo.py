@@ -86,10 +86,13 @@ def ica_single_img(
       proj = torch.load(initial_latent)
       key = list(proj.keys())
       latent = proj[key[0]]['latent'].detach().to(device)
+      #print(proj[key[0]]['noise'])
+      noise = proj[key[0]]['noise']
       if len(list(latent.shape)) == 2:
         w_plus = True
     else:
       latent = trunc
+      noise = None
 
     alpha = range(-num_of_columns // 2 + 1, num_of_columns // 2 + 1)
     resize_transoform = transforms.Resize(resolution)
@@ -129,9 +132,8 @@ def ica_single_img(
           target_latent = latent + alpha[i] * direction
         img, _ = g(
           [target_latent],
-          truncation=truncation,
-          truncation_latent=trunc,
           input_is_latent=True,
+          noise = noise
         )
         img = resize_transoform(img)
         imgs += [img]
