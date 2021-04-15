@@ -1,9 +1,9 @@
 import argparse
-
 import torch
 import numpy
 import random
 from torchvision import utils
+from torchvision import transforms
 
 from model import Generator
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         "--size", type=int, default=256, help="output image size of the generator"
     )
     parser.add_argument(
-        "-n", "--n_sample", type=int, default=7, help="number of samples created"
+        "-n", "--n_sample", type=int, default=64, help="number of samples created"
     )
     parser.add_argument(
         "--truncation", type=float, default=0.7, help="truncation factor"
@@ -57,6 +57,16 @@ if __name__ == "__main__":
         type=str,
         help="name of the closed form factorization result factor file",
     )
+    parser.add_argument(
+        "-d",
+        "--degree",
+        type=float,
+        default=5,
+        help="scalar factors for moving latent vectors along eigenvector",
+    )
+
+
+    index = 1
 
     args = parser.parse_args()
 
@@ -72,20 +82,21 @@ if __name__ == "__main__":
     latent = torch.randn(args.n_sample, 512, device=args.device)
     latent = g.get_latent(latent)
 
-    direction = args.degree * eigvec[:, args.index].unsqueeze(0)
-
-    latent = latent[args.row]
+    direction = args.degree * eigvec[:, index].unsqueeze(0)
 
     alpha = range(-5 // 2 + 1, 5 // 2 + 1)
     directional_results = []
 
-    imgs = []
+    resize_transoform_64 = transforms.Resize(64)
+    to_pil_transoform = transforms.ToPILImage()
+    to_tensor_transoform = transforms.ToTensor()
 
     imgs = []
     i_range = range(5)
 
     for i in i_range:
         target_latent = latent - alpha[i] * direction
+        print(target_latent.shape)
         img, _ = g(
           [target_latent],
           truncation=args.truncation,
@@ -93,7 +104,7 @@ if __name__ == "__main__":
           input_is_latent=True,
         )
         #img = resize_transoform(img)
-        imgs += [img]
+        imgs += [resize_transoform_64(img)]
     final_image = torch.cat(imgs).unsqueeze(0)
     final_image = torch.transpose(final_image, 0, 1)
       
@@ -113,4 +124,3 @@ if __name__ == "__main__":
         nrow=nrow,
     )
     
-
