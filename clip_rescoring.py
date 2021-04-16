@@ -72,10 +72,15 @@ if __name__ == "__main__":
         default=1,
         help="scalar factors for moving latent vectors along eigenvector",
     )
+    parser.add_argument(
+        "-i", "--index", type=int, default=0, help="the index"
+    )
 
-    index = 99
+    
 
     args = parser.parse_args()
+
+    index = args.index
 
     eigvec = torch.load(args.factor)["eigvec"].to(args.device)
     g = Generator(
@@ -87,15 +92,35 @@ if __name__ == "__main__":
 
     semantic_attributes = {
       'gender': ['a male', 'a female'],
-      'hair': ['a person with black hair', 'a person with blonde hair', 'a person with white hair'],
-      'race': ['a person with dark skin', 'a person with light skin'],
-      'glasses': ['a person with glasses', 'a person without glasses']
+      'age' : ['a younger person', 'an older person'],
+      'skin color': ['a person with dark skin', 'a person with light skin'],
+      'hair color': ['a person with black hair', 'a person with blonde hair', 'a person with white hair'],
+
+      'noses': ['a person with long noses', 'a person with short noses'],
+      'beard': ['a person with beard', 'a person without beard'],
+      'lips': ['a person with red lips', 'a person without red lips'],
+
+      'bangs': ['a person with bangs', 'a person without bangs'],
+      'glasses': ['a person with glasses', 'a person without glasses'],
+      'hats': ['a person with hats', 'a person without hats'],
+
+      'cloth_1': ['a person in green clothes', 'a person in red clothes', 'a person in blue clothes'],
+      'cloth_2': ['a person dressed warm', 'a person dressed cool'],
+
+      'mouth open': ['a person with mouth open', 'a person with mouth closed'],
+      'eyes open': ['a person with eyes open', 'a person with eyes closed'],
+
+      'image_background_1': ['a picture with white background', 'a picture with dark background'],
+      'image_background_2': ['a picture with red background', 'a picture with green background', 'a picture with blue background'],
     }
     print(semantic_attributes)
 
     analysis(
       g, 
       eigvec[:, index].unsqueeze(0),
-      semantic_attributes
+      semantic_attributes,
+      number_of_samples = args.n_sample,
+      number_of_variations = args.variant,
+      variation_degrees = args.degree
     )
     
