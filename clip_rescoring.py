@@ -2,18 +2,10 @@ import argparse
 import torch
 import numpy
 import random
-from torchvision import utils
-from torchvision import transforms
 from model import Generator
 import clip
 from PIL import Image
-
-
-
-
-def analysis(images, semantic_text):
-  logits_per_image, logits_per_text = model(image, text)
-  print(logits_per_image - torch.mean(logits_per_image))
+from clip_analysis import analysis
 
 
 
@@ -21,6 +13,8 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     numpy.random.seed(0)
     random.seed(0)
+
+
     
     torch.set_grad_enabled(False)
 
@@ -79,13 +73,10 @@ if __name__ == "__main__":
         help="scalar factors for moving latent vectors along eigenvector",
     )
 
-    
-
     index = 99
 
     args = parser.parse_args()
 
-    model, preprocess = clip.load("ViT-B/32", device=args.device)
     eigvec = torch.load(args.factor)["eigvec"].to(args.device)
     g = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size
@@ -93,59 +84,18 @@ if __name__ == "__main__":
     checkpoint = torch.load(args.ckpt)
     g.load_state_dict(checkpoint["g_ema"])
 
-    trunc = g.mean_latent(4096)
 
-    latent = torch.randn(args.n_sample, 512, device=args.device)
-    latent = g.get_latent(latent)
+    semantic_attributes = {
+      'gender': ['a male', 'a female'],
+      'hair': ['a person with black hair', 'a person with blonde hair', 'a person with white hair'],
+      'race': ['a person with dark skin', 'a person with light skin'],
+      'glasses': ['a person with glasses', 'a person without glasses']
+    }
+    print(semantic_attributes)
 
-
-    direction = args.degree * eigvec[:, index].unsqueeze(0)
-    alpha = range(-args.variant // 2 + 1, args.variant // 2 + 1)
-
-    directional_results = []
-
-    resize_transoform_64 = transforms.Resize(64)
-    to_pil_transoform = transforms.ToPILImage()
-    to_tensor_transoform = transforms.ToTensor()
-
-    imgs = []
-    i_range = range(args.variant)
-
-    latents = []
-    for i in i_range:
-      latents.append((latent - alpha[i] * direction).unsqueeze(1))
-
-    latent_matrix = torch.cat(latents, dim = 1)
-
-    text = clip.tokenize(["a white", "a black"]).to(args.device)
-
-    for i in i_range:
-        target_latent = latent - alpha[i] * direction
-        print(target_latent.shape)
-        img, _ = g(
-          [target_latent],
-          truncation=args.truncation,
-          truncation_latent=trunc,
-          input_is_latent=True,
-        )
-        #img = resize_transoform(img)
-        imgs += [resize_transoform_64(img)]
-    final_image = torch.cat(imgs).unsqueeze(0)
-    final_image = torch.transpose(final_image, 0, 1)
-      
-    directional_results += [final_image]
-
-    nrow = args.n_sample
-    final_image = torch.cat(directional_results, 0)
-
-    final_image = final_image.reshape(final_image.shape[0] * final_image.shape[1], final_image.shape[2], final_image.shape[3], final_image.shape[4])
-
-    grid = utils.save_image(
-        final_image,
-        f"example.png",
-        pad_value  = 1,
-        normalize=True,
-        range=(-1, 1),
-        nrow=nrow,
+    analysis(
+      g, 
+      eigvec[:, index].unsqueeze(0),
+      semantic_attributes
     )
     
