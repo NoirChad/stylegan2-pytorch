@@ -4,8 +4,17 @@ import numpy
 import random
 from torchvision import utils
 from torchvision import transforms
-
 from model import Generator
+#import clip
+from PIL import Image
+
+
+
+
+def analysis(images, semantic_text):
+  logits_per_image, logits_per_text = model(image, text)
+  print(logits_per_image - torch.mean(logits_per_image))
+
 
 
 if __name__ == "__main__":
@@ -14,6 +23,8 @@ if __name__ == "__main__":
     random.seed(0)
     
     torch.set_grad_enabled(False)
+
+    model, preprocess = clip.load("ViT-B/32", device=device)
     parser = argparse.ArgumentParser(description="Apply closed form factorization")
     parser.add_argument(
         "--channel_multiplier",
@@ -44,7 +55,10 @@ if __name__ == "__main__":
         "--size", type=int, default=256, help="output image size of the generator"
     )
     parser.add_argument(
-        "-n", "--n_sample", type=int, default=64, help="number of samples created"
+        "-n", "--n_sample", type=int, default=8, help="number of samples created"
+    )
+    parser.add_argument(
+        "-v", "--variant", type=int, default=8, help="number of samples created"
     )
     parser.add_argument(
         "--truncation", type=float, default=0.7, help="truncation factor"
@@ -61,12 +75,12 @@ if __name__ == "__main__":
         "-d",
         "--degree",
         type=float,
-        default=5,
+        default=1,
         help="scalar factors for moving latent vectors along eigenvector",
     )
 
 
-    index = 1
+    index = 99
 
     args = parser.parse_args()
 
@@ -82,9 +96,10 @@ if __name__ == "__main__":
     latent = torch.randn(args.n_sample, 512, device=args.device)
     latent = g.get_latent(latent)
 
-    direction = args.degree * eigvec[:, index].unsqueeze(0)
 
-    alpha = range(-5 // 2 + 1, 5 // 2 + 1)
+    direction = args.degree * eigvec[:, index].unsqueeze(0)
+    alpha = range(-args.variant // 2 + 1, args.variant // 2 + 1)
+
     directional_results = []
 
     resize_transoform_64 = transforms.Resize(64)
@@ -92,7 +107,15 @@ if __name__ == "__main__":
     to_tensor_transoform = transforms.ToTensor()
 
     imgs = []
-    i_range = range(5)
+    i_range = range(args.variant)
+
+    latents = []
+    for i in i_range:
+      latents.append((latent - alpha[i] * direction).unsqueeze(1))
+
+    latent_matrix = torch.cat(latents, dim = 1)
+
+    text = clip.tokenize(["a man", "a woman"]).to(device)
 
     for i in i_range:
         target_latent = latent - alpha[i] * direction
