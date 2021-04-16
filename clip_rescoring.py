@@ -5,7 +5,7 @@ import random
 from torchvision import utils
 from torchvision import transforms
 from model import Generator
-#import clip
+import clip
 from PIL import Image
 
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     
     torch.set_grad_enabled(False)
 
-    model, preprocess = clip.load("ViT-B/32", device=device)
+    
     parser = argparse.ArgumentParser(description="Apply closed form factorization")
     parser.add_argument(
         "--channel_multiplier",
@@ -79,11 +79,13 @@ if __name__ == "__main__":
         help="scalar factors for moving latent vectors along eigenvector",
     )
 
+    
 
     index = 99
 
     args = parser.parse_args()
 
+    model, preprocess = clip.load("ViT-B/32", device=args.device)
     eigvec = torch.load(args.factor)["eigvec"].to(args.device)
     g = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier, max_channel_size=args.max_channel_size
@@ -115,7 +117,7 @@ if __name__ == "__main__":
 
     latent_matrix = torch.cat(latents, dim = 1)
 
-    text = clip.tokenize(["a man", "a woman"]).to(device)
+    text = clip.tokenize(["a white", "a black"]).to(args.device)
 
     for i in i_range:
         target_latent = latent - alpha[i] * direction
