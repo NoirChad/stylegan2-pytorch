@@ -24,6 +24,7 @@ def analysis(
   variation_degrees = 1,
   truncation = 0.7,
   device = 'cuda',
+  print_examples = False
 ):
 
   model, preprocess = clip.load("ViT-B/32", device=device)
@@ -59,6 +60,7 @@ def analysis(
   for key, value in semantic_attributes.items():
     slope[key] = torch.zeros(len(value), dtype=torch.float)
 
+  example_images = []
   for i in range(number_of_samples):
     image, _ = generator(
             [latent_matrix[i]],
@@ -66,47 +68,32 @@ def analysis(
             truncation_latent=trunc,
             input_is_latent=True,
           )
+    if print_examples and i < 10:
+      example_images.append(resize_transoform_64(image))
     image = resize_transoform_224(image)
     for key, text in tokenized_text.items():
       logits_per_image, logits_per_text = model(image, text)
       probs = logits_per_image.softmax(dim=-1).to('cpu')
       result = regression(variation_degrees * torch.tensor(list(alpha), dtype=torch.float32), probs.float())
       slope[key] += result
+    if i % 10 == 9:
+      print(str(i+1) + "/" + str(number_of_samples))
 
   for key, value in semantic_attributes.items():
     slope[key] /= number_of_samples
-  print(slope)
+    print(str(key) + " : " + str(value))
+    print(slope[key])
 
 
-  
+  if print_examples:
+    final_image = torch.cat(example_images)
+    grid = utils.save_image(
+          final_image,
+          f"example.png",
+          pad_value  = 1,
+          normalize=True,
+          range=(-1, 1),
+          nrow=number_of_variations,
+      )
 
-  imgs = []
-  directional_results = []
-  for i in range(number_of_variations):
-        target_latent = latent - alpha[i] * direction
-        img, _ = generator(
-          [target_latent],
-          truncation=truncation,
-          truncation_latent=trunc,
-          input_is_latent=True,
-        )
-        imgs += [resize_transoform_64(img)]
 
-  final_image = torch.cat(imgs).unsqueeze(0)
-  final_image = torch.transpose(final_image, 0, 1)
-     
-  directional_results += [final_image]
-  nrow = number_of_samples
-  final_image = torch.cat(directional_results, 0)
-  final_image = final_image.reshape(final_image.shape[0] * final_image.shape[1], final_image.shape[2], final_image.shape[3], final_image.shape[4])
-  grid = utils.save_image(
-        final_image,
-        f"example.png",
-        pad_value  = 1,
-        normalize=True,
-        range=(-1, 1),
-        nrow=nrow,
-    )
-
-  #logits_per_image, logits_per_text = model(image, text)
-  #print(logits_per_image - torch.mean(logits_per_image))
