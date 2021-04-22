@@ -4,6 +4,7 @@ from torchvision import utils
 from torchvision import transforms
 from scipy import stats
 import numpy as np
+import random
 import pickle
 
 def logit(p):
@@ -35,6 +36,10 @@ def analysis(
   print_examples = False,
   save_file_name = None,
 ):
+
+  torch.manual_seed(0)
+  np.random.seed(0)
+  random.seed(0)
 
   model, preprocess = clip.load("ViT-B/32", device=device)
 
@@ -95,10 +100,11 @@ def analysis(
   for key, value in semantic_attributes.items():
     slope[key] /= number_of_samples
     cor[key] /= number_of_samples
+    cor[key] = np.tanh(cor[key])
     print(str(key) + " : " + str(value))
     slope[key] = slope[key].numpy()
     print(slope[key])
-    print(np.tanh(cor[key]))
+    print(cor[key])
 
   if save_file_name:
     dict = {
