@@ -4,16 +4,24 @@ from torchvision import utils
 from torchvision import transforms
 from scipy import stats
 import numpy as np
+import pickle
 
 def logit(p):
     return np.log(p) - np.log(1 - p)
 
 def regression(base, probs):
   ones = torch.ones(base.shape[0], dtype=torch.float32)
+  logit_prob = logit(probs)
+
+  cor_0 = np.corrcoef(base.numpy(), logit_prob[:,0])[0][1]
+  cor_1 = np.corrcoef(base.numpy(), logit_prob[:,1])[0][1]
+  cor = np.array([cor_0, cor_1], dtype=np.float)
+  z = np.arctanh(cor)
+
   base = torch.stack([ones, base], dim = 1)
   inv = torch.pinverse(base)
-  result = inv @ logit(probs)
-  return result[1]
+  result = inv @ logit_prob
+  return result[1], z
 
 def analysis(
   generator, 
@@ -24,7 +32,8 @@ def analysis(
   variation_degrees = 1,
   truncation = 0.7,
   device = 'cuda',
-  print_examples = False
+  print_examples = False,
+  save_file_name = None,
 ):
 
   model, preprocess = clip.load("ViT-B/32", device=device)
@@ -57,8 +66,10 @@ def analysis(
 
 
   slope = {}
+  cor = {}
   for key, value in semantic_attributes.items():
     slope[key] = torch.zeros(len(value), dtype=torch.float)
+    cor[key] = np.zeros(len(value), dtype=np.float)
 
   example_images = []
   for i in range(number_of_samples):
@@ -74,15 +85,30 @@ def analysis(
     for key, text in tokenized_text.items():
       logits_per_image, logits_per_text = model(image, text)
       probs = logits_per_image.softmax(dim=-1).to('cpu')
-      result = regression(variation_degrees * torch.tensor(list(alpha), dtype=torch.float32), probs.float())
+      result, z = regression(variation_degrees * torch.tensor(list(alpha), dtype=torch.float32), probs.float())
       slope[key] += result
+      cor[key] += z
+
     if i % 10 == 9:
       print(str(i+1) + "/" + str(number_of_samples))
 
   for key, value in semantic_attributes.items():
     slope[key] /= number_of_samples
+    cor[key] /= number_of_samples
     print(str(key) + " : " + str(value))
+    slope[key] = slope[key].numpy()
     print(slope[key])
+    print(np.tanh(cor[key]))
+
+  if save_file_name:
+    dict = {
+      "semantics" : semantic_attributes,
+      "slope": slope,
+      "correlation": cor
+    }
+    f = open(save_file_name,"wb")
+    pickle.dump(dict,f)
+    f.close()
 
 
   if print_examples:
