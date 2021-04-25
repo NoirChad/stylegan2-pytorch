@@ -70,14 +70,9 @@ def ica_single_img(
 
     num_of_components = number_of_component
 
-    if seed:
-      torch.manual_seed(seed)
-      np.random.seed(seed)
-      random.seed(seed)
-    else:
-      torch.manual_seed(0)
-      np.random.seed(0)
-      random.seed(0)
+    torch.manual_seed(0)
+    np.random.seed(0)
+    random.seed(0)
     
     print("Start semantic factorizing...")
     components = indipendent_components_decomposition(W, num_of_components).to(device)
@@ -85,7 +80,10 @@ def ica_single_img(
     print("Generating images..")
 
     if seed:
-      trunc = g.mean_latent(1)
+      torch.manual_seed(seed)
+      np.random.seed(seed)
+      random.seed(seed)
+      trunc = g.mean_latent(4)
     else:
       trunc = g.mean_latent(4096)
 
