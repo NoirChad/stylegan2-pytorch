@@ -33,7 +33,11 @@ def ica_single_img(
         row = None,
         no_index = False,
         seed = None,
+        need_PIL = False
     ):
+
+    if row is None and need_PIL:
+      assert "If you need a gif, please select a row!"
 
     print("Loading checkpoints...")
     ckpt = torch.load(ckpt)
@@ -88,6 +92,9 @@ def ica_single_img(
     else:
       d_range = range(num_of_components)[start_component:end_component]
 
+    if need_PIL:
+      PIL_list = []
+
     for d in d_range:
 
       txt = Image.new("RGB", (48, 48), (255,255,255))
@@ -123,6 +130,16 @@ def ica_single_img(
         )
         img = resize_transoform(img)
         imgs += [img]
+        if need_PIL:
+          PIL_gird = utils.make_grid(
+              img[0, :, :, :],
+              pad_value  = 1,
+              normalize=True,
+              range=(-1, 1),
+              nrow=1,
+          )
+          PIL_img = to_pil_transoform(PIL_gird)
+          PIL_list.append(PIL_img)
 
       final_image = torch.cat(imgs).unsqueeze(0)
       final_image = torch.transpose(final_image, 0, 1)
@@ -145,7 +162,12 @@ def ica_single_img(
         nrow=nrow,
     )
 
-    return to_pil_transoform(grid)
+    if need_PIL:
+      pil_result = PIL_list
+    else:
+      pil_result = None
+    
+    return to_pil_transoform(grid), pil_result
   
 
 if __name__ == "__main__":
@@ -208,12 +230,13 @@ if __name__ == "__main__":
     parser.add_argument('--no_index', default=False, action='store_true')
     parser.add_argument("--random_seed", type=int, default=None, help="random seed")
     parser.add_argument("--factor", type=str, default=None, required=True, help="factor")
+    parser.add_argument('--gif', default=False, action='store_true')
 
     args = parser.parse_args()
 
     directions = torch.load(args.factor)["eigvec"].to(args.device)
 
-    grid = ica_single_img(
+    grid, pil_result = ica_single_img(
       directions,
       args.ckpt,
       degree = args.degree,
@@ -233,6 +256,13 @@ if __name__ == "__main__":
       row = args.row,
       no_index = args.no_index,
       seed = args.random_seed,
+      need_PIL = args.gif,
       )
 
     grid.save("demo.png")
+    pil_result = pil_result + list(reversed(pil_result))
+    pil_result[0].save('demo.gif',
+               save_all=True,
+               append_images=pil_result[1:],
+               duration=100,
+               loop=0)
