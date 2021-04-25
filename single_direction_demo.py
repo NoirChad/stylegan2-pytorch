@@ -9,22 +9,13 @@ import numpy as np
 import random
 from PIL import Image, ImageDraw, ImageFont
 
-def indipendent_components_decomposition(W, n_components):
-      fast_ica = FastICA(n_components=n_components)
-      fast_ica.fit(W)
-      W_ = fast_ica.components_
-      norm = np.linalg.norm(W_, axis = 1).reshape(-1, n_components)
-      W_nomralize = W_ / norm.T
-      indipendent_components = torch.from_numpy(W_nomralize.T).float()
-      return indipendent_components
-
 from model import Generator
 
 
 def ica_single_img(
+        directions,
         ckpt,
         degree = 5, 
-        number_of_component = 8, 
         channel_multiplier = 2, 
         latent = 512,
         n_mlp = 8,
@@ -42,7 +33,6 @@ def ica_single_img(
         row = None,
         no_index = False,
         seed = None,
-        directions = None
     ):
 
     print("Loading checkpoints...")
@@ -58,34 +48,9 @@ def ica_single_img(
         g.load_state_dict(state_dict)
 
     
-
-    if directions is not None:
-      components = directions
-      num_of_components = directions.shape[1]
-    else:
-
-      modulate = {
-        k: v
-        for k, v in state_dict.items()
-        if "modulation" in k and "to_rgbs" not in k and "weight" in k
-      }
-
-      weight_mat = []
-      for k, v in modulate.items():
-          weight_mat.append(v)
-
-      W = torch.cat(weight_mat, 0)
-
-      num_of_components = number_of_component
-
-      torch.manual_seed(0)
-      np.random.seed(0)
-      random.seed(0)
-      
-      print("Start semantic factorizing...")
-      components = indipendent_components_decomposition(W, num_of_components).to(device)
-      print("Semantic factorizing finished!")
-
+    components = directions
+    num_of_components = directions.shape[1]
+    
     print("Generating images..")
 
     if seed:
@@ -199,9 +164,6 @@ if __name__ == "__main__":
         help="scalar factors for moving latent vectors along eigenvector",
     )
     parser.add_argument(
-        "-n", "--number_of_component", type=int, default=8, help="index of eigenvector"
-    )
-    parser.add_argument(
         "--channel_multiplier",
         type=int,
         default=2,
@@ -245,19 +207,16 @@ if __name__ == "__main__":
     parser.add_argument("--row", type=int, default=None, help="row")
     parser.add_argument('--no_index', default=False, action='store_true')
     parser.add_argument("--random_seed", type=int, default=None, help="random seed")
-    parser.add_argument("--factor", type=str, default=None, help="factor")
+    parser.add_argument("--factor", type=str, default=None, required=True, help="factor")
 
     args = parser.parse_args()
 
-    if args.factor:
-      directions = torch.load(args.factor)["eigvec"].to(args.device)
-    else:
-      directions = None
+    directions = torch.load(args.factor)["eigvec"].to(args.device)
 
     grid = ica_single_img(
+      directions,
       args.ckpt,
       degree = args.degree,
-      number_of_component = args.number_of_component,
       channel_multiplier = args.channel_multiplier,
       latent = args.latent,
       n_mlp = args.n_mlp,
@@ -274,7 +233,6 @@ if __name__ == "__main__":
       row = args.row,
       no_index = args.no_index,
       seed = args.random_seed,
-      directions = directions
       )
 
     grid.save("demo.png")
