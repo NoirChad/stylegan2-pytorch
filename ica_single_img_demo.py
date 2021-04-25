@@ -40,7 +40,8 @@ def ica_single_img(
         num_of_columns = 5,
         col = None,
         row = None,
-        no_index = False
+        no_index = False,
+        seed = None
     ):
 
     print("Loading checkpoints...")
@@ -69,16 +70,24 @@ def ica_single_img(
 
     num_of_components = number_of_component
 
-    torch.manual_seed(0)
-    np.random.seed(0)
-    random.seed(0)
+    if seed:
+      torch.manual_seed(seed)
+      np.random.seed(seed)
+      random.seed(seed)
+    else:
+      torch.manual_seed(0)
+      np.random.seed(0)
+      random.seed(0)
     
     print("Start semantic factorizing...")
     components = indipendent_components_decomposition(W, num_of_components).to(device)
     print("Semantic factorizing finished!")
     print("Generating images..")
 
-    trunc = g.mean_latent(4096)
+    if seed:
+      trunc = g.mean_latent(1)
+    else:
+      trunc = g.mean_latent(4096)
 
     
     w_plus = False
@@ -228,6 +237,7 @@ if __name__ == "__main__":
     parser.add_argument("--col", type=int, default=None, help="column")
     parser.add_argument("--row", type=int, default=None, help="row")
     parser.add_argument('--no_index', default=False, action='store_true')
+    parser.add_argument("--random_seed", type=int, default=None, help="random seed")
 
     args = parser.parse_args()
     
@@ -249,7 +259,8 @@ if __name__ == "__main__":
       num_of_columns = args.num_of_columns,
       col = args.col,
       row = args.row,
-      no_index = args.no_index
+      no_index = args.no_index,
+      seed = args.random_seed
       )
 
     grid.save("demo.png")
