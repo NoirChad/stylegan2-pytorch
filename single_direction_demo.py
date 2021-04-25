@@ -260,9 +260,10 @@ if __name__ == "__main__":
       )
 
     grid.save("demo.png")
-    pil_result = pil_result + list(reversed(pil_result))
-    pil_result[0].save('demo.gif',
-               save_all=True,
-               append_images=pil_result[1:],
-               duration=100,
-               loop=0)
+    if args.gif:
+      pil_result = pil_result + list(reversed(pil_result))
+      pil_result[0].save('demo.gif',
+                save_all=True,
+                append_images=pil_result[1:],
+                duration=100,
+                loop=0)
