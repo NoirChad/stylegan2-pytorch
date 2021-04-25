@@ -39,7 +39,8 @@ def ica_single_img(
         end_component = None,
         num_of_columns = 5,
         col = None,
-        row = None
+        row = None,
+        no_index = False
     ):
 
     print("Loading checkpoints...")
@@ -113,6 +114,7 @@ def ica_single_img(
       draw.text((0, 20), "i = " + str(d), fill=(0,0,0))
       txt = txt.resize((resolution, resolution))
       txt = to_tensor_transoform(txt).to(device).unsqueeze(0)
+      
       imgs = [txt]
 
       direction = degree * components[:, d].T
@@ -123,6 +125,9 @@ def ica_single_img(
       else:
         imgs = [txt]
         i_range = range(num_of_columns)
+
+      if no_index:
+        imgs = []
 
       for i in i_range:
         if w_plus:
@@ -222,6 +227,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_of_columns", type=int, default=5, help="num_of_columns")
     parser.add_argument("--col", type=int, default=None, help="column")
     parser.add_argument("--row", type=int, default=None, help="row")
+    parser.add_argument('--no_index', default=False, action='store_true')
 
     args = parser.parse_args()
     
@@ -242,7 +248,8 @@ if __name__ == "__main__":
       end_component = args.end_component,
       num_of_columns = args.num_of_columns,
       col = args.col,
-      row = args.row
+      row = args.row,
+      no_index = args.no_index
       )
 
     grid.save("demo.png")
