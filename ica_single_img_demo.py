@@ -57,16 +57,19 @@ def ica_single_img(
         ).to(device)
         g.load_state_dict(state_dict)
 
-    modulate = {
-        k: v
-        for k, v in state_dict.items()
-        if "modulation" in k and "to_rgbs" not in k and "weight" in k
-    }
+    
 
     if directions is not None:
       components = directions
-      num_of_components = number_of_component
+      num_of_components = directions.shape[1]
     else:
+
+      modulate = {
+        k: v
+        for k, v in state_dict.items()
+        if "modulation" in k and "to_rgbs" not in k and "weight" in k
+      }
+
       weight_mat = []
       for k, v in modulate.items():
           weight_mat.append(v)
