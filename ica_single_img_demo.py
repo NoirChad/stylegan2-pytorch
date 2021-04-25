@@ -41,7 +41,8 @@ def ica_single_img(
         col = None,
         row = None,
         no_index = False,
-        seed = None
+        seed = None,
+        directions = None
     ):
 
     print("Loading checkpoints...")
@@ -62,21 +63,26 @@ def ica_single_img(
         if "modulation" in k and "to_rgbs" not in k and "weight" in k
     }
 
-    weight_mat = []
-    for k, v in modulate.items():
-        weight_mat.append(v)
+    if directions is not None:
+      components = directions
+      num_of_components = number_of_component
+    else:
+      weight_mat = []
+      for k, v in modulate.items():
+          weight_mat.append(v)
 
-    W = torch.cat(weight_mat, 0)
+      W = torch.cat(weight_mat, 0)
 
-    num_of_components = number_of_component
+      num_of_components = number_of_component
 
-    torch.manual_seed(0)
-    np.random.seed(0)
-    random.seed(0)
-    
-    print("Start semantic factorizing...")
-    components = indipendent_components_decomposition(W, num_of_components).to(device)
-    print("Semantic factorizing finished!")
+      torch.manual_seed(0)
+      np.random.seed(0)
+      random.seed(0)
+      
+      print("Start semantic factorizing...")
+      components = indipendent_components_decomposition(W, num_of_components).to(device)
+      print("Semantic factorizing finished!")
+
     print("Generating images..")
 
     if seed:
@@ -236,9 +242,15 @@ if __name__ == "__main__":
     parser.add_argument("--row", type=int, default=None, help="row")
     parser.add_argument('--no_index', default=False, action='store_true')
     parser.add_argument("--random_seed", type=int, default=None, help="random seed")
+    parser.add_argument("--factor", type=str, default=None, help="factor")
 
     args = parser.parse_args()
-    
+
+    if args.factor:
+      directions = torch.load(args.factor)["eigvec"].to(args.device)
+    else:
+      directions = None
+
     grid = ica_single_img(
       args.ckpt,
       degree = args.degree,
@@ -258,7 +270,8 @@ if __name__ == "__main__":
       col = args.col,
       row = args.row,
       no_index = args.no_index,
-      seed = args.random_seed
+      seed = args.random_seed,
+      directions = directions
       )
 
     grid.save("demo.png")
