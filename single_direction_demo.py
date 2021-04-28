@@ -33,14 +33,8 @@ def ica_single_img(
         row=None,
         no_index=False,
         seed=None,
-        need_PIL=False,
-        prename = None
+        need_PIL=False
 ):
-    if prename:
-        nm = prename + str(row) + str(seed)
-    else:
-        nm = str(row)
-
     if row is None and need_PIL:
         assert "If you need a gif, please select a row!"
 
@@ -171,7 +165,7 @@ def ica_single_img(
     else:
         pil_result = None
 
-    return to_pil_transoform(grid), pil_result, nm
+    return to_pil_transoform(grid), pil_result
 
 
 if __name__ == "__main__":
@@ -241,7 +235,7 @@ if __name__ == "__main__":
 
     directions = torch.load(args.factor)["eigvec"].to(args.device)
 
-    grid, pil_result, nm = ica_single_img(
+    grid, pil_result = ica_single_img(
         directions,
         args.ckpt,
         degree=args.degree,
@@ -264,6 +258,10 @@ if __name__ == "__main__":
         need_PIL=args.gif,
     )
 
+    if args.prename:
+        nm = args.prename + str(args.row) + str(args.random_seed)
+    else:
+        nm = str(args.row)
     grid.save(nm + ".png")
     pil_result = pil_result + list(reversed(pil_result))
     pil_result[0].save(nm + '.gif',
