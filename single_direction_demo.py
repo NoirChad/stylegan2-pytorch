@@ -259,7 +259,10 @@ if __name__ == "__main__":
     )
 
     if args.prename:
-        nm = args.prename + str(args.row) + str(args.random_seed)
+        if args.random_seed:
+            nm = args.prename + str(args.row) + str(args.random_seed)
+        else:
+            nm = args.prename + str(args.row)
     else:
         nm = str(args.row)
     grid.save(nm + ".png")
